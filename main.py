@@ -6,11 +6,24 @@ import time
 from mnist import MNIST
 
 # Hyper parameter
+# Convelution Parrametar
 no_kernels = 3
 kernel_shape = (3,3,1)
 pool_Shape = (2,2)
 no_conv_layer = 2
+# batch size
 batch_size = 10
+# Fully connected Parameter
+no_hidden_layers = 2
+no_output_nods = 10
+no_hidden_nods_1 = 60
+no_hidden_nods_2 = 40
+weight_matrix_1 = 0
+weight_matrix_2 = 0
+weight_matrix_outPut = 0
+bais_1 = 1
+bais_2 = 1
+bais_3 = 1
 
 # input DATA
 mndata = MNIST('/media/patel/DATA/ML_init/DataSets/mnist')
@@ -21,8 +34,10 @@ print 'images :',len(images)
 
 # Initializing
 kernels, paddSize = t.init_kernel(no_kernels,kernel_shape)
-# t.init_output(img,paddSize)
-
+# Initializing Weight Matrixes
+weight_matrix_1 = np.random.uniform(-1,1,(147,no_hidden_nods_1))
+weight_matrix_2 = np.random.uniform(-1,1,(no_hidden_nods_1,no_hidden_nods_2))
+weight_matrix_outPut = np.random.uniform(-1,1,(no_hidden_nods_2,no_output_nods))
 # Pooling layer kernel
 pool_kernel = np.zeros(pool_Shape)
 
@@ -62,6 +77,17 @@ def run(img):
         print "Time at layer ",i," :",time.time()-startT
     return all_layer_output
 
+# returns flattern images data
+def flattern_data(all_layer_output):
+    outputImgs = all_layer_output[len(all_layer_output)-1]
+    fc = []
+    for i in range(len(outputImgs)):
+        # print "flatten :",(outputImgs[i]).flatten()
+        fc.extend((outputImgs[i]).flatten())
+    return np.array(fc).reshape(1,len(fc))
+
+def sigmoid(x):
+    return (1 / (1 + np.exp(-x)))
 
 # input
 img = (np.array(images[0],dtype="uint8")).reshape((28,28,1))
@@ -69,11 +95,12 @@ img = (np.array(images[0],dtype="uint8")).reshape((28,28,1))
 all_layer_output = run(img)
 # show
 # show(no_conv_layer,no_kernels)
-# Fully connected
-final_size_x = img.shape[0]/(no_conv_layer * pool_Shape[0])
-final_size_Y = img.shape[1]/(no_conv_layer * pool_Shape[1])
-final_size_z = img.shape[2]
-final_shape = (no_kernels,final_size_x,final_size_Y,final_size_z)
-print "Final Shape: ",final_shape
-fc = (np.array(all_layer_output)).reshape(final_shape)
-print "FC reshaped Shape: ",fc.shape
+#fullConnected
+fc = flattern_data(all_layer_output)
+# nueral net
+hidden_layer_1_out = sigmoid(np.dot(fc, weight_matrix_1)) + bais_1
+hidden_layer_2_out = sigmoid(np.dot(hidden_layer_1_out, weight_matrix_2)) + bais_2
+final_output = sigmoid(np.dot(hidden_layer_2_out, weight_matrix_outPut))
+
+print "final :",final_output
+print "Arg max: ",final_output.argmax()," max: ",final_output.max()
