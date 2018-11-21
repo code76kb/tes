@@ -50,7 +50,7 @@ all_layer_output = []
 all_convoled = []
 
 # To show oputput of convelution
-def show(max_layer,max_kernel):
+def show(max_layer,max_kernel,all_layer_output):
     for l in range(0,max_layer):
         for k in range(0,max_kernel):
             imgname = "Conved at "+str(l)+" by K:"+str(k)
@@ -120,15 +120,17 @@ def predict(img,label):
 
     # conved
     all_layer_output = conv(img)
+    print 'shape of alloutput :',np.array(all_layer_output).shape
     # show
-    # show(no_conv_layer,no_kernels)
+    show(no_conv_layer,no_kernels,all_layer_output)
     #fullConnected
     fc = flattern_data(all_layer_output)
+    print "fullConnected shape:",fc.shape
     # nueral net
     hidden_layer_1_out = sigmoid(np.dot(fc, weight_matrix_1)) + bais_1
     hidden_layer_2_out = sigmoid(np.dot(hidden_layer_1_out, weight_matrix_2)) + bais_2
     final_output = sigmoid(np.dot(hidden_layer_2_out, weight_matrix_outPut))
-
+    #
     print "final :",final_output
     print "Arg max: ",final_output.argmax()," max: ",final_output.max()
     print "Label: ",label
