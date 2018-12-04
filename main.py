@@ -3,12 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2 as cv
 import time
-from mnist import MNIST
+# from mnist import MNIST
 
 # Hyper parameter
 # Convelution Parrametar
 no_kernels = 3
-kernel_shape = (3,3,1)
+kernel_shape = (3,3,3)
 pool_Shape = (2,2)
 no_conv_layer = 2
 # batch size
@@ -26,11 +26,11 @@ bais_2 = 1
 bais_3 = 1
 
 # input DATA
-mndata = MNIST('/media/patel/DATA/ML_init/DataSets/mnist')
-img = cv.imread("/media/patel/DATA/ML_init/tes/img.jpg")
+# mndata = MNIST('/media/patel/DATA/ML_init/DataSets/mnist')
+img = cv.imread("/home/satyaprakash/tes/img.jpg")
 
-images,labels = mndata.load_training();
-print 'images :',len(images)
+# images,labels = mndata.load_training();
+# print 'images :',len(images)
 
 # Initializing
 kernels, paddSize = t.init_kernel(no_kernels,kernel_shape)
@@ -63,6 +63,7 @@ def layer_opration(img,kernel):
 # Layer by layer conv+pool run
 def run(img):
     print "no of layers: ",no_conv_layer," no kernals: ",no_kernels
+    print "Image Shape: ",img.shape
     all_layer_output = []
     for i in range(0,no_conv_layer):
         startT = time.time()
@@ -90,17 +91,18 @@ def sigmoid(x):
     return (1 / (1 + np.exp(-x)))
 
 # input
-img = (np.array(images[0],dtype="uint8")).reshape((28,28,1))
+# img = (np.array(images[0],dtype="uint8")).reshape((28,28,1))
 # conved
 all_layer_output = run(img)
 # show
-# show(no_conv_layer,no_kernels)
+show(no_conv_layer,no_kernels)
+
 #fullConnected
-fc = flattern_data(all_layer_output)
+# fc = flattern_data(all_layer_output)
 # nueral net
-hidden_layer_1_out = sigmoid(np.dot(fc, weight_matrix_1)) + bais_1
-hidden_layer_2_out = sigmoid(np.dot(hidden_layer_1_out, weight_matrix_2)) + bais_2
-final_output = sigmoid(np.dot(hidden_layer_2_out, weight_matrix_outPut))
+# hidden_layer_1_out = sigmoid(np.dot(fc, weight_matrix_1)) + bais_1
+# hidden_layer_2_out = sigmoid(np.dot(hidden_layer_1_out, weight_matrix_2)) + bais_2
+# final_output = sigmoid(np.dot(hidden_layer_2_out, weight_matrix_outPut))
 
 print "final :",final_output
 print "Arg max: ",final_output.argmax()," max: ",final_output.max()

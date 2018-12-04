@@ -34,8 +34,12 @@ def conv(img,kernel,paddSize):
     startT = time.time()
 
     output = np.zeros_like(img)
+    # print "output Shape: ",output.shape
     paddedImg = np.zeros((img.shape[0]+paddSize,img.shape[1]+paddSize,img.shape[2]),dtype='uint8')
     paddedImg [paddSize-1:img.shape[0]+paddSize-1 , paddSize-1:img.shape[1]+paddSize-1] = img
+    # print "paddSize: ",paddSize
+    # print "PaddedImg Shape: ",paddedImg.shape
+    # print "Kernel shape: ",kernel.shape
 
     for x in range(0,img.shape[0]):
         for y in range(0,img.shape[1]):
