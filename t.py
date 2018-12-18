@@ -33,12 +33,17 @@ def init_kernel(no_kernels,shape):
 def conv(img,kernel,paddSize):
     startT = time.time()
 
-    output = np.zeros_like(img)
+    output = np.zeros_like(img,dtype='float128')
     paddedImg = np.zeros((img.shape[0]+paddSize,img.shape[1]+paddSize,img.shape[2]),dtype='uint8')
     paddedImg [paddSize-1:img.shape[0]+paddSize-1 , paddSize-1:img.shape[1]+paddSize-1] = img
 
+    # print 'Conve : paddedImg shape :',paddedImg.shape
+    # print 'Conve : kernel shape :',kernel.shape
+    # print 'Conve : img shape :',img.shape
+
     for x in range(0,img.shape[0]):
         for y in range(0,img.shape[1]):
+            # print "Conve :at x,y pos on img :",x,',',y
             output[x,y,0]= (kernel[:,:,0] * paddedImg[x:x+kernel.shape[0], y:y+kernel.shape[1], 0]).sum() # Red Channel
             if(img.shape[2] > 1):
                 output[x,y,1]= (kernel[:,:,1] * paddedImg[x:x+kernel.shape[0], y:y+kernel.shape[1], 1]).sum() # Green Channel
@@ -50,11 +55,53 @@ def conv(img,kernel,paddSize):
     sec = stopT - startT
     return output,relued,sec
 
+# Calculate Conve output shape
+
+def outPutShape_Cal(imgShape,kernelShape,paddSize):
+    return ((imgShape - kernelShape) * 2 (paddSize - 1) ) + 1
+
+
+# for error calculation
+def conv2(img,kernel,paddSize,outputShape):
+    startT = time.time()
+
+    # Calculate output shape after conv
+    imgShape = np.array(img.shape)
+    kernelShape = np.array(kernel.shape)
+    # outputShape = outPutShape_Cal(imgShape,kernelShape,paddSize)
+
+    output = np.zeros(outputShape,dtype='float128')
+
+    paddedImg = np.zeros((img.shape[0]+paddSize,img.shape[1]+paddSize,img.shape[2]),dtype='uint8')
+    if(paddSize != 0 ):
+        paddedImg [paddSize-1:img.shape[0]+paddSize-1 , paddSize-1:img.shape[1]+paddSize-1] = img
+    else:
+        paddedImg = img
+
+    # print 'Conve2 : paddedImg shape :',paddedImg.shape
+    # print 'Conve2 : kernel shape :',kernel.shape
+    # print 'Conve2 : img shape :',img.shape
+    # print 'Conve2 : output shape :',output.shape
+
+    for x in range(0,output.shape[0]):
+        for y in range(0,output.shape[1]):
+            # print "Conve :at x,y pos on img :",x,',',y
+            output[x,y,0]= (kernel[:,:,0] * paddedImg[x:x+kernel.shape[0], y:y+kernel.shape[1], 0]).sum() # Red Channel
+            if(img.shape[2] > 1):
+                output[x,y,1]= (kernel[:,:,1] * paddedImg[x:x+kernel.shape[0], y:y+kernel.shape[1], 1]).sum() # Green Channel
+            if(img.shape[2] > 2):
+                output[x,y,2]= (kernel[:,:,2] * paddedImg[x:x+kernel.shape[0], y:y+kernel.shape[1], 2]).sum() # Blue Channel
+    # relued = output
+    # relued[relued<=0]=0 #Relu Activation
+    stopT = time.time()
+    sec = stopT - startT
+    return output,sec
+
 def pool(img,kernel):
     w = int(img.shape[0]/kernel.shape[0])
     h = int(img.shape[1]/kernel.shape[1])
     d = int(img.shape[2])
-    outputImg = np.zeros((w,h,d),dtype='uint8')
+    outputImg = np.zeros((w,h,d))
     # print 'Pooled output shaped :',outputImg.shape
     for x in range(w):
         for y in range(h):
