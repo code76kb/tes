@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2 as cv
 import time
+import math
 from mnist import MNIST
 
 # Hyper parameter
@@ -54,24 +55,25 @@ all_pooled = []
 
 # To show oputput of convelution
 def show(max_layer,max_kernel,all_layer_output):
+    cv.destroyAllWindows()
     for l in range(0,max_layer):
         for k in range(0,max_kernel):
             imgname = "Conved at "+str(l)+" by K:"+str(k)
             cv.imshow(str(imgname),all_layer_output[l][k])
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
 
 # perform convelution and pooling opration
 def layer_opration(img,kernel):
-    print ' layer opr img ::',img.shape
-    print ' layer opr kernel ::',kernel.shape
+    # print ' layer opr img ::',img.shape
+    # print ' layer opr kernel ::',kernel.shape
     output,relued,time = t.conv(img,kernel,paddSize)
     outputImg = t.pool(relued,pool_kernel)
     return outputImg,relued
 
 # Layer by layer conv+pool run
 def conv(img):
-    print "no of layers: ",no_conv_layer," no kernals: ",no_kernels
+    # print "no of layers: ",no_conv_layer," no kernals: ",no_kernels
     all_layer_output = []
     all_layer_output_Convoled = []
     for i in range(0,no_conv_layer):
@@ -98,7 +100,7 @@ def conv(img):
         all_layer_output.append(all_pooled)
         all_layer_output_Convoled.append(all_convolved)
 
-        print "Time at layer ",i," :",time.time()-startT
+        # print "Time at layer ",i," :",time.time()-startT
     return all_layer_output, all_layer_output_Convoled
 
 # returns flattern images data
@@ -125,12 +127,12 @@ def softmax_cost(out,label):
     probs = eout/eout.sum()
     label = label.reshape((10,1))
     p = (label*probs).sum()
-    print "Label shape:",label.shape,"probs shape:",probs.shape
+    # print "Label shape:",label.shape,"probs shape:",probs.shape
     cost = -np.log(p)
     entropy = -1 * label * (np.log(p))
-    print "Entropy :",entropy
-    print  "P: ",p
-    print "Probs :",probs
+    # print "Entropy :",entropy
+    # print  "P: ",p
+    # print "Probs :",probs
     print "cost :",cost
     return cost,probs
 
@@ -141,10 +143,10 @@ def pool_error_map(conved, pooled_delta):
     mapShape = conved.shape
     error_pool_shape = pooled_delta.shape
     # conved = conved.reshape(conved.shape[0],conved.shape[1],conved.shape[2])
-    conved_error_map = np.zeros_like(conved)
-    print "error map shape :",conved_error_map.shape
-    print 'conved data shape :',conved.shape
-    print 'pooled_delta shape :',pooled_delta.shape
+    conved_error_map = np.zeros_like(conved,dtype='float128')
+    # print "error map shape :",conved_error_map.shape
+    # print 'conved data shape :',conved.shape
+    # print 'pooled_delta shape :',pooled_delta.shape
     w = int(conved.shape[1] / pooled_delta.shape[1] )
     h = int (conved.shape[2] / pooled_delta.shape[2])
     conved = conved.flatten()
@@ -152,14 +154,14 @@ def pool_error_map(conved, pooled_delta):
     conved_error_map = conved_error_map.flatten()
     i = 0
     step = error_pool_shape[1] * error_pool_shape[2]
-    print 'step size :',step
-    print 'Conved len : ',len(conved)
+    # print 'step size :',step
+    # print 'Conved len : ',len(conved)
 
     while (i < len(conved)):
         tmp = conved[i:i+step]
         maxPos = tmp.argmax();
         corrs_pool_pos = maxPos % step
-        print 'corrs_pool_pos :',corrs_pool_pos," error:",pooled_delta[corrs_pool_pos]
+        # print 'corrs_pool_pos :',corrs_pool_pos," error:",pooled_delta[corrs_pool_pos]
         conved_error_map[maxPos] = pooled_delta[corrs_pool_pos]
         i = i + step
 
@@ -176,18 +178,23 @@ def predict(img,label):
     img = (np.array(img,dtype="uint8")).reshape((28,28,1))
     # label vector
     labeles = np.zeros((10,1))
-    labeles[label-1,0] = 1
+    labeles[label,0] = 1
+
+    # Check
+    # print 'Labels :',labeles
+    # print "\n labe :",label
+    # return
 
     # conved
     all_layer_output, all_layer_output_Convoled = conv(img)
-    print 'shape of alloutput :',np.array(all_layer_output).shape
-    print "shape of all convolved output:",np.array(all_layer_output_Convoled).shape
+    # print 'shape of alloutput :',np.array(all_layer_output).shape
+    # print "shape of all convolved output:",np.array(all_layer_output_Convoled).shape
     # show
     # show(no_conv_layer,no_kernels,all_layer_output)
     #fullConnected
     fc = flattern_data(all_layer_output)
-    print "fullConnected shape:",fc.shape
-    print "Weight 1shape :",weight_matrix_1.shape
+    # print "fullConnected shape:",fc.shape
+    # print "Weight 1shape :",weight_matrix_1.shape
 
 
     # nueral net
@@ -197,11 +204,17 @@ def predict(img,label):
     hidden_layer_2_out = sigmoid(np.dot( weight_matrix_2, hidden_layer_1_out))
     final_output = sigmoid(np.dot(weight_matrix_outPut, hidden_layer_2_out))
     #
-    print "final :",final_output
+    # print "final :",final_output
     print "Arg max: ",final_output.argmax()," max: ",final_output.max()
     print "Label: ",label
 
     cost,probs = softmax_cost(final_output,labeles)
+
+    if(math.isnan(cost)):
+        print 'cost is nan ......:'
+        return True
+
+
     # back prop
     # Final out put layer
     delta3 =   np.multiply( (probs - labeles.reshape((10,1)) ),sigmoidPrime(np.dot(weight_matrix_outPut, hidden_layer_2_out)) )
@@ -304,6 +317,8 @@ def predict(img,label):
 
         i = i-1
 
+    return False
+
 
 def train():
     i = 0;
@@ -311,7 +326,8 @@ def train():
     print "Total data len:",len(images)," till :",till
     while(i < till):
         print " \n \n For Ideration I is : ",i
-        predict(images[i],labels[i])
+        if (predict(images[i],labels[i]) == True):
+            return
         i = i+1
 
 # predict(images[0],labels[0])

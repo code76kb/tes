@@ -34,7 +34,7 @@ def conv(img,kernel,paddSize):
     startT = time.time()
 
     output = np.zeros_like(img,dtype='float128')
-    paddedImg = np.zeros((img.shape[0]+paddSize,img.shape[1]+paddSize,img.shape[2]),dtype='uint8')
+    paddedImg = np.zeros((img.shape[0]+paddSize,img.shape[1]+paddSize,img.shape[2]),dtype='float128')
     paddedImg [paddSize-1:img.shape[0]+paddSize-1 , paddSize-1:img.shape[1]+paddSize-1] = img
 
     # print 'Conve : paddedImg shape :',paddedImg.shape
@@ -72,7 +72,7 @@ def conv2(img,kernel,paddSize,outputShape):
 
     output = np.zeros(outputShape,dtype='float128')
 
-    paddedImg = np.zeros((img.shape[0]+paddSize,img.shape[1]+paddSize,img.shape[2]),dtype='uint8')
+    paddedImg = np.zeros((img.shape[0]+paddSize,img.shape[1]+paddSize,img.shape[2]),dtype='float128')
     if(paddSize != 0 ):
         paddedImg [paddSize-1:img.shape[0]+paddSize-1 , paddSize-1:img.shape[1]+paddSize-1] = img
     else:
@@ -105,7 +105,7 @@ def pool(img,kernel):
     w = int(img.shape[0]/kernel.shape[0])
     h = int(img.shape[1]/kernel.shape[1])
     d = int(img.shape[2])
-    outputImg = np.zeros((w,h,d))
+    outputImg = np.zeros((w,h,d),dtype='float128')
     # print 'Pooled output shaped :',outputImg.shape
     for x in range(w):
         for y in range(h):
