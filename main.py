@@ -209,29 +209,29 @@ def predict(img,label):
     # Hidden layer 2
     delta2  =  np.dot(weight_matrix_outPut.T, delta3) * sigmoidPrime(np.dot( weight_matrix_2, hidden_layer_1_out))
     dedw2   =  np.dot(delta2, hidden_layer_1_out.T)
-    print 'dedw2 shape :',dedw2.shape
+    # print 'dedw2 shape :',dedw2.shape
     # Hidden layer 1
     delta1 =  np.dot(weight_matrix_2.T , delta2) * sigmoidPrime( np.dot(weight_matrix_1,fc) )
     dedw1  =  np.dot(delta1, fc.T)
     # First layer Fully connected
     delta0 = np.dot(weight_matrix_1.T, delta1) * fc
 
-    print "dedw1 shape :",dedw1.shape
-    print "W1 shape :",weight_matrix_1.shape
-    print "delta1 shape :",delta1.shape
-    print 'delta0 shape :',delta0.shape
+    # print "dedw1 shape :",dedw1.shape
+    # print "W1 shape :",weight_matrix_1.shape
+    # print "delta1 shape :",delta1.shape
+    # print 'delta0 shape :',delta0.shape
     # print "delta0 :",delta0
 
     # update the weight matrix in ANN
     weight_matrix_1 = weight_matrix_1 - dedw1
-    weight_matrix_1 = weight_matrix_2 - dedw2
+    weight_matrix_2 = weight_matrix_2 - dedw2
     weight_matrix_outPut = weight_matrix_outPut - dedw3
 
     # into Conve convnet
 
     # arrang delta0 into matrix
     deltaOutPutImg = delta0.reshape((no_kernels,7,7,1))
-    print "delta img shape :", deltaOutPutImg.shape
+    # print "delta img shape :", deltaOutPutImg.shape
     # map delta0
     dedx = 0
     i = no_conv_layer-1
@@ -252,8 +252,8 @@ def predict(img,label):
         if(i == no_conv_layer-1):
             mappedError = pool_error_map(all_layer_output_Convoled[i],deltaOutPutImg)
             inputX = np.array(all_layer_output_Convoled[i])
-            print 'mapped error shape :',mappedError.shape
-            print 'input x shape :',inputX.shape
+            # print 'mapped error shape :',mappedError.shape
+            # print 'input x shape :',inputX.shape
             for j in range(0,mappedError.shape[0]):
                 # dedw = np.multiply(all_layer_output_Convoled[i] , mappedError)
                 # print 'dedw at layer :',i," shape :",dedw.shape
@@ -263,23 +263,56 @@ def predict(img,label):
                 # layer delta error
                 kernel =  kernels_0[j,:,:,:]
                 kernel = np.rot90(kernel,2,(1,2)) # 180 dgre kernel rotetion
-                print "kernels_0 shape :",kernel.shape
-                delta_error,time = t.conv2(mappedError[j,:,:,:],kernel,0,(12,12,1))
+                # print "kernels_0 shape :",kernel.shape
+                delta_error,time = t.conv2(mappedError[j,:,:,:],kernel,2,(14,14,1))
                 layer_delta_error.extend(delta_error)
 
-                print 'dedw at layer :',i," and kernel # ;", j ," shape :",dedw.shape
-                print 'delta_error at layer :',i," and kernel # ;", j ," shape :",delta_error.shape
+                # print 'dedw at layer :',i," and kernel # ;", j ," shape :",dedw.shape
+                # print 'delta_error at layer :',i," and kernel # ;", j ," shape :",delta_error
 
-            #Update the kernel weights
-            print "gradiant len :",len(layer_kernal_gradiant)
+            # Update the kernel weights
+            # print "gradiant len :",np.array(layer_kernal_gradiant).reshape(3,3,3,1)
             kernels_0 = kernels_0 - np.array(layer_kernal_gradiant).reshape(3,3,3,1)
-            print "After update kernel shape : ",kernels_0.shape
+            # print "After update kernel shape : ",kernels_0.shape
 
-        #else:
+        else:
+            deltaOutPutImg = np.array(layer_delta_error).reshape((3,14,14,1))
+            mappedError = pool_error_map(all_layer_output_Convoled[i],deltaOutPutImg)
+            inputX = np.array(all_layer_output_Convoled[i])
+            # print 'deltaOutPutImg :',deltaOutPutImg.shape
+            # print 'mapped error shape :',mappedError.shape
+            # print 'input x shape :',inputX.shape
+            for j in range(0,mappedError.shape[0]):
+                outputShape = (3,3,1)
+                dedw,time = t.conv2(inputX[j,:,:,:],mappedError[j,:,:,:],paddSize,outputShape)
+                layer_kernal_gradiant.extend(dedw)
+                # #layer delta error
+                # kernel =  kernels_0[j,:,:,:]
+                # kernel = np.rot90(kernel,2,(1,2)) # 180 dgre kernel rotetion
+                # print "kernels_0 shape :",kernel.shape
+                # delta_error,time = t.conv2(mappedError[j,:,:,:],kernel,paddSize,(14,14,1))
+                # layer_delta_error.extend(delta_error)
+
+                # print 'dedw at layer :',i," and kernel # ;", j ," shape :",dedw
+                # print 'delta_error at layer :',i," and kernel # ;", j ," shape :",delta_error.shape
+
+            # Update the kernel weights
+            # print "gradiant len :",len(layer_kernal_gradiant)
+            kernels_1 = kernels_1 - np.array(layer_kernal_gradiant).reshape(3,3,3,1)
+            # print "After update kernel at layer ",i," kernel is : ",np.array(layer_kernal_gradiant).reshape(3,3,3,1)
+
 
         i = i-1
 
 
+def train():
+    i = 0;
+    till = len(images)/2
+    print "Total data len:",len(images)," till :",till
+    while(i < till):
+        print " \n \n For Ideration I is : ",i
+        predict(images[i],labels[i])
+        i = i+1
 
-
-predict(images[0],labels[0])
+# predict(images[0],labels[0])
+train()

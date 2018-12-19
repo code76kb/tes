@@ -78,6 +78,10 @@ def conv2(img,kernel,paddSize,outputShape):
     else:
         paddedImg = img
 
+    # print "Conve2 : PaddedImg :",paddedImg
+    # print "Conve2 : kernel :",kernel
+
+
     # print 'Conve2 : paddedImg shape :',paddedImg.shape
     # print 'Conve2 : kernel shape :',kernel.shape
     # print 'Conve2 : img shape :',img.shape
