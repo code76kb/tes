@@ -18,8 +18,8 @@ def init_kernel(no_kernels,shape):
     variance = 0.6/shape[0]
     shape1 = (no_kernels,)+shape
     kernel = np.random.uniform(-variance,variance,shape1)
-    paddSize = ((shape[0]-1)/2) + 1
-    print "Kernel Shape : ",kernel.shape,", paddSize :",paddSize
+    paddSize = int(((shape[0]-1)/2) + 1)
+    print ("Kernel Shape : ",kernel.shape,", paddSize :",paddSize)
     return kernel,paddSize
 
 # def init_output(img,paddSize):
@@ -33,7 +33,7 @@ def init_kernel(no_kernels,shape):
 def conv(img,kernel,paddSize):
     startT = time.time()
 
-    output = np.zeros_like(img,dtype='float128')
+    output = np.zeros_like(img)
     paddedImg = np.zeros((img.shape[0]+paddSize,img.shape[1]+paddSize,img.shape[2]),dtype='float128')
     paddedImg [paddSize-1:img.shape[0]+paddSize-1 , paddSize-1:img.shape[1]+paddSize-1] = img
 
@@ -50,7 +50,10 @@ def conv(img,kernel,paddSize):
             if(img.shape[2] > 2):
                 output[x,y,2]= (kernel[:,:,2] * paddedImg[x:x+kernel.shape[0], y:y+kernel.shape[1], 2]).sum() # Blue Channel
     relued = output
+    # print '\nraw output ;',output
     relued[relued<=0]=0 #Relu Activation
+    # print '\nrelued old one output ;',relued
+    # relued * (relued > 0)
     stopT = time.time()
     sec = stopT - startT
     return output,relued,sec
