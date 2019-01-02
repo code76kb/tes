@@ -33,7 +33,7 @@ def init_kernel(no_kernels,shape):
 def conv(img,kernel,paddSize):
     startT = time.time()
 
-    output = np.zeros_like(img)
+    output = np.zeros_like(img,dtype="float128")
     paddedImg = np.zeros((img.shape[0]+paddSize,img.shape[1]+paddSize,img.shape[2]),dtype='float128')
     paddedImg [paddSize-1:img.shape[0]+paddSize-1 , paddSize-1:img.shape[1]+paddSize-1] = img
 
@@ -51,7 +51,10 @@ def conv(img,kernel,paddSize):
                 output[x,y,2]= (kernel[:,:,2] * paddedImg[x:x+kernel.shape[0], y:y+kernel.shape[1], 2]).sum() # Blue Channel
     relued = output
     # print '\nraw output ;',output
-    relued[relued<=0]=0 #Relu Activation
+    #relued[relued<=0]=0 #Relu Activation
+    #Leaky Relu
+    relued = np.where(relued > 0,relued , relued * 0.01)
+    
     # print '\nrelued old one output ;',relued
     # relued * (relued > 0)
     stopT = time.time()

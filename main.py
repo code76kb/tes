@@ -16,7 +16,7 @@ Debug = False
 
 # Hyper parameter
 # Convelution Parrametar
-LearningRate = 0.1
+LearningRate = 10
 no_kernels = 6
 kernel_shape = (3,3,1)
 pool_Shape = (2,2)
@@ -36,8 +36,8 @@ bais_2 = 0
 bais_3 = 0
 
 # input DATA
-mndata = MNIST('/mnt/66C2AAD8C2AAABAD/ML_init/DataSets/mnist')
-img = cv.imread("/mnt/66C2AAD8C2AAABAD/ML_init/tes/img.jpg")
+mndata = MNIST("/home/satyaprakash/Downloads/mnist")
+# img = cv.imread("/mnt/66C2AAD8C2AAABAD/ML_init/tes/img.jpg")
 
 images,labels = mndata.load_training();
 print ('images :',len(images))
@@ -144,12 +144,13 @@ def sigmoid(x):
 
 #Relu Activation
 def relu(x):
-    x[x<=0]=0 #Relu Activation
+    # x[x<=0]=0 #Relu Activation
+    x = np.where(x > 0, x, x * 0.01) #Leaky Relu
     return x
 
 #Relu Prime
 def reluPrime(x):
-    x[x<0]=0
+    x[x<0]=0.01
     x[x>0]=1
     return x
 
@@ -169,7 +170,7 @@ def softmax_cost(out,label):
     if(Debug):
         print ('out :',out)
     # normalze
-    # out = out/out.sum()
+    out = (out/out.sum()) * 255
 
     eout = np.exp(out)
     probs = eout/eout.sum()
@@ -220,7 +221,7 @@ def pool_error_map(conved, pooled_delta):
 
 # Prdict
 def predict(img,label):
-    global weight_matrix_1,weight_matrix_2,weight_matrix_outPut,kernels_0,kernels_1
+    global weight_matrix_1,weight_matrix_2,weight_matrix_outPut,kernels_0,kernels_1,bais_1,bais_2,bais_3
     # input
     img = (np.array(img,dtype="uint8")).reshape((28,28,1))
     # label vector
@@ -242,17 +243,46 @@ def predict(img,label):
         # show(no_conv_layer,no_kernels,all_layer_output)
     #fullConnected
     fc = flattern_data(all_layer_output)
-    if(Debug):
-        print ("fullConnected shape:",fc)
+    # if(Debug):
+    #     print ("fullConnected shape:",fc)
     # print "Weight 1shape :",weight_matrix_1.shape
-
+    
+    if(np.isnan(fc).any()):
+        print 'nan in Fc :',fc    
 
     # nueral net
-    hidden_layer_1_out = sigmoid(np.dot(weight_matrix_1,fc) + bais_1)
+    hidden_layer_1_out = relu(np.dot(weight_matrix_1,fc) + bais_1)
+    
+    if (np.isnan(hidden_layer_1_out).any()):
+        print 'nan in hidden_layer_1_out : ',hidden_layer_1_out
+        print "weight_matrix_1 :",weight_matrix_1
+        print "weight_matrix_1 have nan :",np.isnan(weight_matrix_1).any()
+        print "fc :",fc
+        print "bais_1 :",bais_1
+        print "Dot 1:",np.dot(weight_matrix_1,fc) + bais_1
+
     # print 'hidden_layer_1 :', hidden_layer_1_out.shape
     # print "weight_matrix_2 :",weight_matrix_2.shape
-    hidden_layer_2_out = sigmoid(np.dot( weight_matrix_2, hidden_layer_1_out) + bais_2)
-    final_output = sigmoid(np.dot(weight_matrix_outPut, hidden_layer_2_out) + bais_3)
+    hidden_layer_2_out = relu(np.dot( weight_matrix_2, hidden_layer_1_out) + bais_2)
+    
+    if (np.isnan(hidden_layer_2_out).any()):
+        print 'nan in hidden_layer_2_out : ',hidden_layer_2_out
+        print "weight_matrix_2 :",weight_matrix_2
+        print "weight_matrix_2 have nan :",np.isnan(weight_matrix_2).any()
+        print "hidden_layer_1_out :",hidden_layer_1_out
+        print "bais_2 :",bais_2
+        print "Dot 2 :",(np.dot( weight_matrix_2, hidden_layer_1_out) + bais_2)
+
+    final_output = relu(np.dot(weight_matrix_outPut, hidden_layer_2_out) + bais_3)
+    
+    if (np.isnan(hidden_layer_1_out).any()):
+        print 'nan in finalout : ',final_output
+        print "weight_matrix_3 :",weight_matrix_outPut
+        print "weight_matrix_3 have nan :",np.isnan(weight_matrix_outPut).any()
+        print "hidden_layer_2_out :",hidden_layer_2_out
+        print "bais_3 :",bais_3
+        print "Dot 3 :",(np.dot(weight_matrix_outPut, hidden_layer_2_out) + bais_3)
+    
     #
     # print "final :",final_output
     print ("Arg max: ",final_output.argmax()," max: ",final_output.max())
@@ -274,15 +304,34 @@ def predict(img,label):
 
     # back prop
     # Final out put layer
-    delta3 =   np.multiply( (probs - labeles.reshape((10,1)) ),sigmoidPrime(np.dot(weight_matrix_outPut, hidden_layer_2_out)) )
+    delta3 =   np.multiply( (probs - labeles.reshape((10,1)) ),reluPrime(np.dot(weight_matrix_outPut, hidden_layer_2_out)) ) 
     dedw3 = np.dot( delta3, hidden_layer_2_out.T)
+    dedb3 = delta3;
+
+    if(np.isnan(delta3).any()):
+        print 'delta3 have nan:',delta3
+    if(np.isnan(dedw3).any()):
+        print 'dedw3 have nan:',dedw3    
+
     # Hidden layer 2
-    delta2  =  np.dot(weight_matrix_outPut.T, delta3) * sigmoidPrime(np.dot( weight_matrix_2, hidden_layer_1_out))
+    delta2  =  np.dot(weight_matrix_outPut.T, delta3) * reluPrime(np.dot( weight_matrix_2, hidden_layer_1_out))
     dedw2   =  np.dot(delta2, hidden_layer_1_out.T)
+    dedb2 = delta2;
+
+    if(np.isnan(delta2).any()):
+        print 'delta2 have nan:',delta2
+    if(np.isnan(dedw2).any()):
+        print 'dedw2 have nan:',dedw2    
     # print 'dedw2 shape :',dedw2.shape
     # Hidden layer 1
-    delta1 =  np.dot(weight_matrix_2.T , delta2) * sigmoidPrime( np.dot(weight_matrix_1,fc) )
+    delta1 =  np.dot(weight_matrix_2.T , delta2) * reluPrime( np.dot(weight_matrix_1,fc) )
     dedw1  =  np.dot(delta1, fc.T)
+    dedb1 = delta1
+
+    if(np.isnan(delta1).any()):
+        print 'delta1 have nan:',delta1
+    if(np.isnan(dedw1).any()):
+        print 'dedw1 have nan:',dedw1    
     # First layer Fully connected
     delta0 = np.dot(weight_matrix_1.T, delta1) * fc
 
@@ -293,9 +342,13 @@ def predict(img,label):
     # print "delta0 :",delta0
 
     # update the weight matrix in ANN
-    weight_matrix_1 = weight_matrix_1 - (dedw1 * LearningRate)
-    weight_matrix_2 = weight_matrix_2 - (dedw2 * LearningRate)
-    weight_matrix_outPut = weight_matrix_outPut - (dedw3 * LearningRate)
+    weight_matrix_1 = weight_matrix_1 - (dedw1)
+    weight_matrix_2 = weight_matrix_2 - (dedw2)
+    weight_matrix_outPut = weight_matrix_outPut - (dedw3)
+    #baise update
+    bais_1 = bais_1 - dedb1
+    bais_2 = bais_2 - dedb2
+    bais_3 = bais_3 - dedb3
 
     # into Conve convnet
 
@@ -320,7 +373,9 @@ def predict(img,label):
             mappedError = pool_error_map(all_layer_output_Convoled[i],deltaOutPutImg)
             # relu prime
             # dconv2[conv2<=0]=0
-            mappedError[np.array(all_layer_output_Convoled[i]) <= 0]=0
+            #mappedError[np.array(all_layer_output_Convoled[i]) <= 0]=0
+            deRelu = np.where(np.array(all_layer_output_Convoled[i]) > 0, 1 , 0.01)
+            mappedError = np.multiply(deRelu,mappedError)
 
             inputX = np.array(all_layer_output_Convoled[i])
             # print 'mapped error shape :',mappedError.shape
@@ -343,7 +398,7 @@ def predict(img,label):
 
             # Update the kernel weights
             # print "gradiant len :",np.array(layer_kernal_gradiant).reshape(3,3,3,1)
-            kernels_1 = kernels_1 - (np.array(layer_kernal_gradiant).reshape(no_kernels,3,3,1) * LearningRate)
+            kernels_1 = kernels_1 - (np.array(layer_kernal_gradiant).reshape(no_kernels,3,3,1))
             # print "After update kernel shape : ",kernels_0.shape
 
         else:
@@ -351,7 +406,9 @@ def predict(img,label):
             mappedError = pool_error_map(all_layer_output_Convoled[i],deltaOutPutImg)
 
             # relu prime
-            mappedError[np.array(all_layer_output_Convoled[i]) <= 0]=0
+            # mappedError[np.array(all_layer_output_Convoled[i]) <= 0]=0
+            deRelu = np.where(np.array(all_layer_output_Convoled[i]) > 0, 1 , 0.01)
+            mappedError = np.multiply(deRelu,mappedError)
 
             inputX = np.array(all_layer_output_Convoled[i])
             # print 'deltaOutPutImg :',deltaOutPutImg.shape
@@ -373,7 +430,7 @@ def predict(img,label):
 
             # Update the kernel weights
             # print "gradiant len :",len(layer_kernal_gradiant)
-            kernels_0 = kernels_0 - (np.array(layer_kernal_gradiant).reshape(no_kernels,3,3,1) * LearningRate)
+            kernels_0 = kernels_0 - (np.array(layer_kernal_gradiant).reshape(no_kernels,3,3,1))
             # print "After update kernel at layer ",i," kernel is : ",np.array(layer_kernal_gradiant).reshape(3,3,3,1)
 
 
@@ -383,7 +440,7 @@ def predict(img,label):
 
 
 def train():
-    global kernels_0,kernels_1,weight_matrix_1,weight_matrix_2,weight_matrix_outPut,Training
+    global kernels_0,kernels_1,weight_matrix_1,weight_matrix_2,weight_matrix_outPut,Training,bais_1,bais_2,bais_3
 
     Training = True
 
@@ -393,13 +450,16 @@ def train():
     print ("Total data len:",len(images)," till :",till)
 
     # load learned DATA
-    if(os.path.isfile('/mnt/66C2AAD8C2AAABAD/ML_init/tes/kernels_0.dat')):
+    if(os.path.isfile('/home/satyaprakash/tes2/kernels_0.dat')):
         print ('loading old saved kernals.......')
         kernels_0 = (np.load("kernels_0.dat"))
         kernels_1 = (np.load("kernels_1.dat"))
         weight_matrix_1 =  (np.load("weight_matrix_1.dat"))
         weight_matrix_2 = (np.load("weight_matrix_2.dat"))
         weight_matrix_outPut = (np.load('weight_matrix_outPut.dat'))
+        bais_1 = np.load('bais_1.dat')
+        bais_2 = np.load('bais_2.dat')
+        bais_3 = np.load('bais_3.dat')
 
     else:
         print ('no old kernel are there....')
@@ -412,13 +472,13 @@ def train():
         a1 = s*till
         a2 = a1 + till
         i = 0
-        print ('Running Batch from :',a1, " to ",a2)
+        print ('\nRunning epoch ', ep,'from :',a1, " to ",a2)
 
         images_batch =  images[a1:a2]
         labels_batch =  labels[a1:a2]
 
         while(i < till):
-            print (" \n \n  For Ideration I is : ",i)
+            print ("\n\nFor Ideration I is : ",i)
             cv.destroyAllWindows()
             if (predict(images_batch[i],labels_batch[i]) == True):
                 return
@@ -454,6 +514,9 @@ def train():
     weight_matrix_1.dump("weight_matrix_1.dat")
     weight_matrix_2.dump("weight_matrix_2.dat")
     weight_matrix_outPut.dump('weight_matrix_outPut.dat')
+    bais_1.dump('bais_1.dat')
+    bais_2.dump('bais_2.dat')
+    bais_3.dump('bais_3.dat')
 
     # Plot cost graph
     step = (10/100) * till
@@ -472,7 +535,7 @@ def train():
     ax = plt.subplot()
 
     ax.plot(t, succsessPoints)
-    ax.set(xlabel='time (sec)', ylabel='error',
+    ax.set(xlabel='time', ylabel='succsess',
            title='About as simple as it gets, folks')
     ax.grid()
     #
@@ -499,6 +562,10 @@ def test():
     weight_matrix_1 =  (np.load("weight_matrix_1.dat"))
     weight_matrix_2 = (np.load("weight_matrix_2.dat"))
     weight_matrix_outPut = (np.load('weight_matrix_outPut.dat'))
+    bais_1 = np.load('bais_1.dat')
+    bais_2 = np.load('bais_2.dat')
+    bais_3 = np.load('bais_3.dat')
+
 
     # print "\nkernels_0  raw :",kernels_0.shape
     # return
