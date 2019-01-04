@@ -26,7 +26,7 @@ bais_2 = 1
 bais_3 = 1
 
 # input DATA
-# mndata = MNIST('/media/patel/DATA/ML_init/DataSets/mnist')
+
 img = cv.imread("/home/satyaprakash/tes/img.jpg")
 
 # images,labels = mndata.load_training();
